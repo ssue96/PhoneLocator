@@ -8,6 +8,7 @@
     import android.database.sqlite.SQLiteDatabase;
     import android.location.Location;
     import android.location.LocationListener;
+    import android.os.AsyncTask;
     import android.os.Build;
     import android.os.StrictMode;
     import android.support.annotation.NonNull;
@@ -21,6 +22,24 @@
     import android.widget.Toast;
 
     import com.google.firebase.iid.FirebaseInstanceId;
+
+    import org.json.JSONException;
+    import org.json.JSONObject;
+
+    import java.io.BufferedReader;
+    import java.io.BufferedWriter;
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.io.InputStreamReader;
+    import java.io.OutputStream;
+    import java.io.OutputStreamWriter;
+    import java.net.MalformedURLException;
+    import java.net.ProtocolException;
+    import java.net.URL;
+    import java.util.Calendar;
+    import java.util.Date;
+
+    import javax.net.ssl.HttpsURLConnection;
 
     public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
         private static final String TAG = "MainActivity";
@@ -38,6 +57,7 @@
         String setPw;//get password which stored in database
         String setReceiver;//get receiver email which stored in database
 
+        StringBuffer stringBuffer = new StringBuffer();//string buffer for json parser
         SQLiteDatabase db;//use sqlite database
         MySQLiteOpenHelper helper;//use sqlite database
 
@@ -61,6 +81,7 @@
             receiver = (EditText) findViewById(R.id.receiver);
 
 
+
             helper = new MySQLiteOpenHelper(MainActivity.this, "test.db", null, 1);
 
             //when you click "register" button, save your email account on database
@@ -72,6 +93,7 @@
                     getSender = sender.getText().toString();
                     getPw = pw.getText().toString();
                     getReceiver = receiver.getText().toString();
+                    Log.e("sendmail", "sender : "+ setSender + " pw : " + setPw + " receiver : "+ setReceiver);
 
                     //insert on database
                     insert(getSender,getPw,getReceiver);
@@ -79,6 +101,8 @@
                     //if success to save on database, go to next page
                     Intent intent = new Intent(MainActivity.this, Edit.class);
                     startActivity(intent);
+
+
                 }
             });
 
@@ -123,6 +147,27 @@
 
                             try {
                                 select();
+                                //json parser
+                                String startJson = "[";
+                                String endJson = "]";
+
+                                if(!stringBuffer.toString().equals("")){
+                                    stringBuffer.append(",");
+                                }
+                                Date currentTime = Calendar.getInstance().getTime();
+                                String temp = "{\"email\"" + ":" + "\"" + setReceiver + "\"" + ","
+                                        + "\"date\"" + ":" + "\"" + currentTime + "\"" + ","
+                                        + "\"latitude\"" + ":" + "\"" + locationX +"\"" + ","
+                                        + "\"longitude\"" + ":" + "\"" + locationY +"\"" + "}";
+                                stringBuffer.append(temp);
+                                Log.d("Json parser test : ", temp);
+
+                                //node.js connection
+                                JSONTask jsonTask = new JSONTask();
+                                jsonTask.setJsonData(temp);
+                                jsonTask.execute("Your-Host-URL");//AsynkTask start;
+
+
                                 GMailSender sender = new GMailSender(setSender, setPw);
                                 sender.sendMail("Phone Locator",
                                                 "X : " + locationX + "\n" +
@@ -211,4 +256,6 @@
         public void onClick(View view) {
 
         }
+
     }
+

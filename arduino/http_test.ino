@@ -10,8 +10,8 @@
 #define BUTTON_PIN D1
 #define BUTTONLOW_PIN D0
 
-const char* ssid     = "";
-const char* password = "";
+const char* ssid     = "";//your ap id
+const char* password = "";//your ap password
 
 const char* host = "";//host
 
@@ -57,7 +57,7 @@ void loop() {
   
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
-  const int httpPort = 80;
+  const int httpPort = 3000;//set your port
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
     return;
